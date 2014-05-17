@@ -17,8 +17,8 @@ def main():
 		      "github.com/kaare8p/Dogecoin-tipper")
 	r = praw.Reddit(user_agent=user_agent)
 
-	user = 'kaare8p'	
-	r.login(user, 'askl12')
+	user = ''	
+	r.login(user, '')
 
 	already_done = set()
 	prawUsers =[user, 'dogetipbot', 'dogetipchecker']
