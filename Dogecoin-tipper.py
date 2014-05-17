@@ -17,7 +17,6 @@ counter = 0
 counter2 = 0
 amount = 5
 
-
 def ratelimit(func, *args, **kwargs):
 	while True:
 		try:
@@ -45,12 +44,12 @@ def check_balance():
 
 balance = check_balance()
 
-while 1 > 2:
+while True:
 	comments = subreddit.get_comments(limit = 100)
 	for comment in comments:
 
 		author = comment.author
-		if (author is None):
+		if author is None:
 			has_praw = True
 		else:
 			has_praw = any(string in author.name for string in prawUsers)
@@ -59,7 +58,6 @@ while 1 > 2:
 			counter += 1
 			ratelimit(comment.reply, "I'm testing my Tipping bot, have some Doge!\n\n+/u/dogetipbot %d doge" % amount)
 			already_done.add(comment.id)
-			print ("Commented %s" % comment)
 			print ("Number %d" % counter)
 			balance -= amount
 
