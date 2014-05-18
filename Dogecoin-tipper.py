@@ -1,6 +1,8 @@
 import praw
 import time
-from pprint import pprint
+import logging
+
+logging.basicConfig(filename='Dogecoin-tipper.log',level=logging.DEBUG)
 
 user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
@@ -10,19 +12,18 @@ user = 'DogeCoinTipperb'
 r.login(user, '')
 
 already_done = set()
-prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot']
-prawWords =[":(", "):", ":-(", ")-:", ":'(", ":|"]
+prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster']
+prawWords =[":(", ":-(", ":'(", ":|"]
 
 subreddit = r.get_subreddit('dogecoin')
 
 counter = 0
-counter2 = 0
-
 amount = 9.8
+
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
 		"Sorry for the small amount, every sad shibe have to get some!\n\n"
-		"^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running!\n" % amount)
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running!\n" % amount)
 
 def ratelimit(func, *args, **kwargs):
 	while True:
@@ -31,6 +32,7 @@ def ratelimit(func, *args, **kwargs):
 			break
 		except praw.errors.RateLimitExceeded as error:
 			print '\tSleeping for %d seconds' % error.sleep_time
+			logging.info("\tSleeping for %d seconds" % error.sleep_time)
 			time.sleep(error.sleep_time)
 
 def check_balance():
@@ -47,6 +49,8 @@ def check_balance():
 				return float(s)
 
 balance = check_balance()
+print ("\tEnough Doge for %.0f tips" % balance/amount)
+logging.info("\tEnough Doge for %.0f tips" % balance/amount)
 
 while True:
 	comments = subreddit.get_comments(limit = 100)
@@ -64,17 +68,28 @@ while True:
 
 		if comment.id not in already_done and not has_praw_users and has_praw and balance >= amount:
 			ratelimit(comment.reply, comment_text)
-			already_done.add(comment.id)
-			print ("Number %d" % counter)
 			balance -= amount
+			already_done.add(comment.id)
 
-	if (counter - counter2 > 500):
-		print "Checking balance..."
-		counter2 = counter
+			print ("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, balance/amount)
+			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, balance/amount)
+
+	if (counter > 500):
+		print "\tChecking balance..."
+		logging.info("\tChecking balance...")
+		
+		counter = 0
 		time.sleep(20)
 		balance = check_balance()
+		
 		if balance < amount:
-			print ("\tExiting due to lack of funds")
+			print ("Exiting due to lack of funds")
+			logging.warning("Exiting due to lack of funds")
 			exit()
+		
+		print ("\tEnough Doge for %.0f tips" % balance/amount)
+		info.logging("\tEnough Doge for %.0f tips" % balance/amount)
+
 	print ("\tSleeping for 100 seconds")
+	logging.info("\tSleeping for 100 seconds")
 	time.sleep(100)
