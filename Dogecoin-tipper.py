@@ -21,9 +21,8 @@ counter2 = 0
 amount = 9.8
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
-		"Sorry for the small amount, every sad shibe have to get some!"
-		"^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running!"
-		"[^^Github:](https://github.com/kaare8p/Dogecoin-tipper)" % amount)
+		"Sorry for the small amount, every sad shibe have to get some!\n\n"
+		"^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running!\n" % amount)
 
 def ratelimit(func, *args, **kwargs):
 	while True:
@@ -35,22 +34,19 @@ def ratelimit(func, *args, **kwargs):
 			time.sleep(error.sleep_time)
 
 def check_balance():
-	prawTerms = ['history']
-	r.send_message('dogetipbot', 'history', '+history')
+	prawTerms = ['+tip sent']
 	while True:
-		time.sleep(10)
-
-		messages = r.get_unread('comments')
+		messages = r.get_inbox('comments')
 		for message in messages:
 			op_subject = message.subject
 			has_praw = any(string in op_subject for string in prawTerms)
 			if has_praw:
 				op_text = message.body
-				op_line = op_text.splitlines()[3]
+				op_line = op_text.splitlines()[2]
 				s=''.join(i for i in op_line if i.isdigit() or i == ".")
 				return float(s)
 
-balance = 134.6#check_balance()
+balance = check_balance()
 
 while True:
 	comments = subreddit.get_comments(limit = 100)
@@ -72,11 +68,13 @@ while True:
 			print ("Number %d" % counter)
 			balance -= amount
 
-	if (counter - counter2 > 100):
+	if (counter - counter2 > 500):
+		print "Checking balance..."
 		counter2 = counter
+		time.sleep(20)
 		balance = check_balance()
 		if balance < amount:
 			print ("\tExiting due to lack of funds")
 			exit()
-	print ("\tSleeping for 10 seconds")	
-	time.sleep(10)
+	print ("\tSleeping for 100 seconds")
+	time.sleep(100)
