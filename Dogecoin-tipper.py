@@ -42,7 +42,6 @@ def check_balance():
 	messages = r.get_inbox('comments')
 	
 	for message in messages:
-		print message
 		op_subject = message.subject
 		has_praw = any(string in op_subject for string in prawTerms)
 		
@@ -67,8 +66,8 @@ def check_tips():
 			already_done.add(message.id)
 			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes! Much generous')
 			
-			print ("Posting reply to a donation")
-			logging.info("Posting reply to a donation")
+			print ("Posted reply to a donation")
+			logging.info("Posted reply to a donation")
 	return
 
 balance = check_balance()
