@@ -9,7 +9,7 @@ user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
 r = praw.Reddit(user_agent=user_agent)
 user = 'DogeCoinTipperb'	
-r.login(user, '')
+r.login(user, 'muchbot556')
 
 already_done = set()
 # Avoid comments from these users
@@ -62,9 +62,9 @@ def check_tips():
 		author = message.author
 
 		has_praw = any(string in op_text for string in prawTerms)
-		if has_praw and author.name != 'dogetipbot':
+		if has_praw and author.name != 'dogetipbot' and message.id not in already_done:
 			already_done.add(message.id)
-			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes! Much generous')
+			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes! very generosity')
 			
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
@@ -120,6 +120,6 @@ while True:
 		logging.info("\tEnough Doge for %.0f tips" % tips)
 
 	check_tips()
-	print ("\tSleeping for 180 seconds")
-	logging.info("\tSleeping for 180 seconds")
+	print ("\tSleeping for 100 seconds")
+	logging.info("\tSleeping for 100 seconds")
 	time.sleep(100)
