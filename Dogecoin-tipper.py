@@ -79,7 +79,7 @@ logging.info("\tEnough Doge for %.0f tips" % tips)
 # Main loop
 while True:
 	comments = subreddit.get_comments(limit = 100)
-	# Check for sad comments, and tip 'amoun' doge if found
+	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
 		
 		counter += 1
@@ -103,12 +103,11 @@ while True:
 
 	# If 500 or more comments parsed, check the balance to account for tips
 	if (counter > 500):
-		print "\tChecking balance and tips..."
-		logging.info("\tChecking balance and tips...")
+		print "\tChecking balance..."
+		logging.info("\tChecking balance...")
 		
 		counter = 0
 		time.sleep(20)
-		check_tip()
 		balance = check_balance()
 		
 		if balance < amount:
@@ -119,7 +118,8 @@ while True:
 		tips = balance/amount
 		print ("\tEnough Doge for %.0f tips" % tips)
 		logging.info("\tEnough Doge for %.0f tips" % tips)
-	
+
+	check_tips()
 	print ("\tSleeping for 180 seconds")
 	logging.info("\tSleeping for 180 seconds")
 	time.sleep(100)
