@@ -9,7 +9,7 @@ user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
 r = praw.Reddit(user_agent=user_agent)
 user = 'DogeCoinTipperb'	
-r.login(user, 'muchbot556')
+r.login(user, '')
 
 already_done = set()
 # Avoid comments from these users
