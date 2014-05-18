@@ -49,8 +49,10 @@ def check_balance():
 				return float(s)
 
 balance = check_balance()
-print ("\tEnough Doge for %.0f tips" % balance/amount)
-logging.info("\tEnough Doge for %.0f tips" % balance/amount)
+tips = balance/amount
+
+print ("\tEnough Doge for %.0f tips" % tips)
+logging.info("\tEnough Doge for %.0f tips" % tips)
 
 while True:
 	comments = subreddit.get_comments(limit = 100)
@@ -69,10 +71,11 @@ while True:
 		if comment.id not in already_done and not has_praw_users and has_praw and balance >= amount:
 			ratelimit(comment.reply, comment_text)
 			balance -= amount
+			tips = balance/amount
 			already_done.add(comment.id)
 
-			print ("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, balance/amount)
-			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, balance/amount)
+			print ("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
+			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
 
 	if (counter > 500):
 		print "\tChecking balance..."
@@ -87,8 +90,9 @@ while True:
 			logging.warning("Exiting due to lack of funds")
 			exit()
 		
-		print ("\tEnough Doge for %.0f tips" % balance/amount)
-		info.logging("\tEnough Doge for %.0f tips" % balance/amount)
+		tips = balance/amount
+		print ("\tEnough Doge for %.0f tips" % tips)
+		logging.info("\tEnough Doge for %.0f tips" % tips)
 
 	print ("\tSleeping for 100 seconds")
 	logging.info("\tSleeping for 100 seconds")
