@@ -9,11 +9,11 @@ user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
 r = praw.Reddit(user_agent=user_agent)
 user = 'DogeCoinTipperb'	
-r.login(user, 'dogecoin1221')
+r.login(user, '')
 
 already_done = set()
 # Avoid comments from these users
-prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot']
+prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot']
 prawWords =[":(", ":-(", ":'(", ":|"]
 
 subreddit = r.get_subreddit('dogecoin')
@@ -63,8 +63,6 @@ def check_tips():
 		author = message.author
 
 		has_praw = any(string in op_text for string in prawTerms)
-				
-
 		if has_praw and author.name != 'dogetipbot':
 			already_done.add(message.id)
 			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes! Much generous')
