@@ -2,7 +2,6 @@
 import praw
 import time
 import logging
-from pprint import pprint
 
 # Basic configuration
 logging.basicConfig(filename='Dogecoin-tipper.log',level=logging.DEBUG)
@@ -64,7 +63,7 @@ def calculate_tip():
 				elif check:
 					s += i
 			received += float(s)
-	return int((received * 0.8)/sent)
+	return received/sent
 
 # Check how many doge is left on the bots account
 def check_balance():
@@ -94,7 +93,7 @@ def check_tips():
 		has_praw = any(string in op_text for string in prawTerms)
 		if has_praw and author.name != 'dogetipbot' and message.id not in already_done:
 			already_done.add(message.id)
-			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes! very generosity')
+			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
 			
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
@@ -105,11 +104,11 @@ tips = balance/amount
 
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
-		"Sorry for the small amount, every sad shibe have to get some!\n\n"
+		"The amount i tip is entirely based on donations!\n\n"
 		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
 
-print ("Tip set at %d doge" % amount)
-logging.info("Tip set at %d doge" % amount)
+print ("\tTip set at %.1f doge" % amount)
+logging.info("\tTip set at %.1f doge" % amount)
 print ("\tEnough Doge for %.0f tips" % tips)
 logging.info("\tEnough Doge for %.0f tips" % tips)
 
@@ -135,8 +134,8 @@ while True:
 			tips = balance/amount
 			already_done.add(comment.id)
 
-			print ("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
-			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
+			print ("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
 	# If 500 or more comments parsed, check the balance to account for tips and calculate new tip
 	if (counter > 500):
@@ -144,13 +143,13 @@ while True:
 		logging.info("\tChecking balance and new tip amount...")
 		
 		amount = calculate_tip()
+		if amount < 9.8: amount = 9.8
 		comment_text = ("You seem sad, have some doge!\n\n"
 				"+/u/dogetipbot %.1f doge\n\n"
-				"Sorry for the small amount, every sad shibe have to get some!\n\n"
+				"The amount i tip is entirely based on donations!\n\n"
 				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
 		
 		counter = 0
-		time.sleep(20)
 		balance = check_balance()
 		
 		if balance < amount:
@@ -159,8 +158,8 @@ while True:
 			exit()
 		
 		tips = balance/amount
-		print ("\tEnough Doge for %.0f tips, one tip is %d doge" % (tips, amount))
-		logging.info("\tEnough Doge for %.0f tips, one tip is %d doge" % (tips, amount))
+		print ("\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+		logging.info("\Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
 	check_tips()
 	print ("\tSleeping for 100 seconds")
