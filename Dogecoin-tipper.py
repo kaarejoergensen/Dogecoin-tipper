@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import praw
 import time
 import logging
+from pprint import pprint
 
 # Basic configuration
 logging.basicConfig(filename='Dogecoin-tipper.log',level=logging.DEBUG)
@@ -13,17 +15,12 @@ r.login(user, '')
 
 already_done = set()
 # Avoid comments from these users
-prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot']
+prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland']
 prawWords =[":(", ":-(", ":'(", ":|"]
 
 subreddit = r.get_subreddit('dogecoin')
 
 counter = 0
-amount = 9.8
-comment_text = ("You seem sad, have some doge!\n\n"
-		"+/u/dogetipbot %.1f doge\n\n"
-		"Sorry for the small amount, every sad shibe have to get some!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
 
 # Ensures compliance with reddit api rules
 def ratelimit(func, *args, **kwargs):
@@ -35,6 +32,39 @@ def ratelimit(func, *args, **kwargs):
 			print '\tSleeping for %d seconds' % error.sleep_time
 			logging.info("\tSleeping for %d seconds" % error.sleep_time)
 			time.sleep(error.sleep_time)
+
+# Calculate the tip
+def calculate_tip():
+	prawTerms_sent = ['+tip sent']
+	prawTerms_received = ['+tip received']
+	messages = r.get_inbox(limit=200)
+
+	# Number of tips sent over a period of 12 hours
+	sent = 0
+	received = 0
+	for message in messages:
+		op_subject = message.subject
+		has_praw_sent = any(string in op_subject for string in prawTerms_sent)
+		has_praw_received = any(string in  op_subject for string in prawTerms_received)
+		
+		if (message.created_utc - time.time()) < -43200:
+			break
+		elif has_praw_sent:
+			sent += 1
+		elif has_praw_received:
+			op_text = message.body
+			op_line = op_text.splitlines()[0]
+			s = ''
+			check = False
+			for i in op_line:
+				if i == u'Ð':
+					check = True
+				elif i == ' ':
+					check = False
+				elif check:
+					s += i
+			received += float(s)
+	return int((received * 0.8)/sent)
 
 # Check how many doge is left on the bots account
 def check_balance():
@@ -69,10 +99,17 @@ def check_tips():
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
 	return
-
+amount = calculate_tip()
 balance = check_balance()
 tips = balance/amount
 
+comment_text = ("You seem sad, have some doge!\n\n"
+		"+/u/dogetipbot %.1f doge\n\n"
+		"Sorry for the small amount, every sad shibe have to get some!\n\n"
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
+
+print ("Tip set at %d doge" % amount)
+logging.info("Tip set at %d doge" % amount)
 print ("\tEnough Doge for %.0f tips" % tips)
 logging.info("\tEnough Doge for %.0f tips" % tips)
 
@@ -101,10 +138,16 @@ while True:
 			print ("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
 			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips" % (balance, tips))
 
-	# If 500 or more comments parsed, check the balance to account for tips
+	# If 500 or more comments parsed, check the balance to account for tips and calculate new tip
 	if (counter > 500):
-		print "\tChecking balance..."
-		logging.info("\tChecking balance...")
+		print "\tChecking balance and new tip amount..."
+		logging.info("\tChecking balance and new tip amount...")
+		
+		amount = calculate_tip()
+		comment_text = ("You seem sad, have some doge!\n\n"
+				"+/u/dogetipbot %.1f doge\n\n"
+				"Sorry for the small amount, every sad shibe have to get some!\n\n"
+				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
 		
 		counter = 0
 		time.sleep(20)
@@ -116,8 +159,8 @@ while True:
 			exit()
 		
 		tips = balance/amount
-		print ("\tEnough Doge for %.0f tips" % tips)
-		logging.info("\tEnough Doge for %.0f tips" % tips)
+		print ("\tEnough Doge for %.0f tips, one tip is %d doge" % (tips, amount))
+		logging.info("\tEnough Doge for %.0f tips, one tip is %d doge" % (tips, amount))
 
 	check_tips()
 	print ("\tSleeping for 100 seconds")
