@@ -74,7 +74,6 @@ def check_tips():
 			
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
-	already_done.close()
 	return
 balance = check_balance()
 amount = calculate_tip(balance)
@@ -139,7 +138,7 @@ while True:
 		print ("\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 		logging.info("\Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
-#	check_tips()
+	check_tips()
 	print ("\tSleeping for 100 seconds")
 	logging.info("\tSleeping for 100 seconds")
 	time.sleep(100)
