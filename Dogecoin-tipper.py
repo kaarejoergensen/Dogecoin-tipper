@@ -33,37 +33,13 @@ def ratelimit(func, *args, **kwargs):
 			time.sleep(error.sleep_time)
 
 # Calculate the tip
-def calculate_tip():
-	prawTerms_sent = ['+tip sent']
-	prawTerms_received = ['+tip received']
-	messages = r.get_inbox(limit=200)
-
-	# Number of tips sent over a period of 12 hours
-	sent = 0
-	received = 0
-	for message in messages:
-		op_subject = message.subject
-		has_praw_sent = any(string in op_subject for string in prawTerms_sent)
-		has_praw_received = any(string in  op_subject for string in prawTerms_received)
-		
-		if (message.created_utc - time.time()) < -43200:
-			break
-		elif has_praw_sent:
-			sent += 1
-		elif has_praw_received:
-			op_text = message.body
-			op_line = op_text.splitlines()[0]
-			s = ''
-			check = False
-			for i in op_line:
-				if i == u'Ð':
-					check = True
-				elif i == ' ':
-					check = False
-				elif check:
-					s += i
-			received += float(s)
-	return received/sent
+def calculate_tip(balance):
+	if balance <= 2000:
+		return float(10)
+	elif balance > 2000 and balance <= 10000:
+		return balance/200
+	elif balance > 10000:
+		return float(50)
 
 # Check how many doge is left on the bots account
 def check_balance():
@@ -98,8 +74,8 @@ def check_tips():
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
 	return
-amount = calculate_tip()
 balance = check_balance()
+amount = calculate_tip(balance)
 tips = balance/amount
 
 comment_text = ("You seem sad, have some doge!\n\n"
@@ -114,7 +90,7 @@ logging.info("\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
-	comments = subreddit.get_comments(limit = 100)
+	comments = subreddit.get_comments(limit = 500)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
 		
@@ -141,16 +117,15 @@ while True:
 	if (counter > 500):
 		print "\tChecking balance and new tip amount..."
 		logging.info("\tChecking balance and new tip amount...")
-		
-		amount = calculate_tip()
-		if amount < 9.8: amount = 9.8
+
+		counter = 0
+		balance = check_balance()
+
+		amount = calculate_tip(balance)
 		comment_text = ("You seem sad, have some doge!\n\n"
 				"+/u/dogetipbot %.1f doge\n\n"
 				"The amount i tip is entirely based on donations!\n\n"
 				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
-		
-		counter = 0
-		balance = check_balance()
 		
 		if balance < amount:
 			print ("Exiting due to lack of funds")
