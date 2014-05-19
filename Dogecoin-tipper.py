@@ -10,8 +10,11 @@ logging.basicConfig(filename='Dogecoin-tipper.log',level=logging.DEBUG)
 user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
 r = praw.Reddit(user_agent=user_agent)
-user = 'DogeCoinTipperb'	
+user = 'DogecoinTipperb'	
 r.login(user, '')
+
+abuse_text = ("I'm sorry, but due to some jerk, i had to implement a limit to the tipping.\n\n"
+	      "The list will be purged regularly. I hope you feel better soon regardles!")
 
 # Avoid comments from these users
 prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland']
@@ -75,9 +78,39 @@ def check_tips():
 			print ("Posted reply to a donation")
 			logging.info("Posted reply to a donation")
 	return
+
+# Stops abuse.
+def check_user(user):
+	userlist = open("userlist.txt", "r")
+	count = 0
+
+	for line in userlist:
+		if user in line:
+			count += 1
+	userlist.close()
+
+	if count < 3:
+		return True
+	else:
+		return False
+
+def tips_remaining(balance):
+	count = 0
+	while balance > 10:
+		if balance <= 2000:
+			balance -= 10
+			count += 1
+		elif balance > 2000 and balance <= 10000:
+			balance -= balance/200
+			count += 1
+		elif balance > 10000:
+			balance -= 50
+			count += 1
+	return count
+
 balance = check_balance()
 amount = calculate_tip(balance)
-tips = balance/amount
+tips = tips_remaining(balance)
 
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
@@ -105,18 +138,29 @@ while True:
 			has_praw_users = any(string in author.name for string in prawUsers)
 		has_praw = any(string in op_text for string in prawWords)
 
-		if comment.id not in open('already_done.txt').read() and not has_praw_users and has_praw and balance >= amount:
-			ratelimit(comment.reply, comment_text)
-			balance -= amount
-			tips = balance/amount
+		if not has_praw_users and has_praw and balance >= amount and comment.id not in open('already_done.txt').read():
+			
+			if not check_user(author.name):
+				ratelimit(comment.reply, abuse_text)
+		
+				print("User %s did not pass check, posted comment!" % author.name)
+				logging.info("User %s did not pass check, posted comment!" % author.name)
+			else:
+				ratelimit(comment.reply, comment_text)
+				balance -= amount
+				tips = tips_remaining(balance)
+				with open('userlist.txt', 'a') as userlist:
+					userlist.write("%s\n" % author.name)
+
+				print ("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+				logging.info("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+	
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
+			
 
-			print ("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
-			logging.info("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
-
-	# If 500 or more comments parsed, check the balance to account for tips and calculate new tip
-	if (counter > 500):
+	# If 200 or more comments parsed, check the balance to account for tips and calculate new tip
+	if (counter >= 200):
 		print "\tChecking balance and new tip amount..."
 		logging.info("\tChecking balance and new tip amount...")
 
@@ -134,7 +178,7 @@ while True:
 			logging.warning("Exiting due to lack of funds")
 			exit()
 		
-		tips = balance/amount
+		tips = tips_remaining(balance)
 		print ("\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 		logging.info("\Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
