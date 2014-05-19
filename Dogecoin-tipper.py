@@ -67,7 +67,7 @@ def check_tips():
 		author = message.author
 
 		has_praw = any(string in op_text for string in prawTerms)
-		if has_praw and author.name != 'dogetipbot' and message.id not in open('already_done').read():
+		if has_praw and author.name != 'dogetipbot' and message.id not in open('already_done.txt').read():
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % message.id)
 			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
