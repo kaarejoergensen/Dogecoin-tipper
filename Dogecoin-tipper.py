@@ -15,7 +15,7 @@ r.login(user, '')
 prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland']
 prawWords =[":(", ":-(", ":'(", ":|"]
 
-subreddit = r.get_subreddit('rbottesting121')
+subreddit = r.get_subreddit('dogecoin')
 
 counter = 0
 
