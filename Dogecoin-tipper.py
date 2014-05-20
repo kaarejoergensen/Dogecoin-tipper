@@ -2,25 +2,20 @@
 import praw
 import time
 import logging
+from pprint import pprint
 
 # Basic configuration
-logging.basicConfig(filename='Dogecoin-tipper.log',level=logging.DEBUG)
-
-
 user_agent = ("Dogecoin tipper 1.0 by /u/kaare8p"
 		      "github.com/kaare8p/Dogecoin-tipper")
 r = praw.Reddit(user_agent=user_agent)
-user = 'DogecoinTipperb'	
+user = 'DogeCoinTipperb'	
 r.login(user, '')
-
-abuse_text = ("I'm sorry, but due to some jerk, i had to implement a limit to the tipping.\n\n"
-	      "The list will be purged regularly. I hope you feel better soon regardles!")
 
 # Avoid comments from these users
 prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland']
 prawWords =[":(", ":-(", ":'(", ":|"]
 
-subreddit = r.get_subreddit('dogecoin')
+subreddit = r.get_subreddit('rbottesting121')
 
 counter = 0
 
@@ -32,7 +27,6 @@ def ratelimit(func, *args, **kwargs):
 			break
 		except praw.errors.RateLimitExceeded as error:
 			print '\tSleeping for %d seconds' % error.sleep_time
-			logging.info("\tSleeping for %d seconds" % error.sleep_time)
 			time.sleep(error.sleep_time)
 
 # Calculate the tip
@@ -61,7 +55,7 @@ def check_balance():
 			return float(s)
 
 # Check for donations, and thanks if any is present
-def check_tips():
+def check_donations():
 	prawTerms = ['+/u/dogetipbot']
 	messages = r.get_unread('comments')
 	
@@ -76,23 +70,7 @@ def check_tips():
 			ratelimit(message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
 			
 			print ("Posted reply to a donation")
-			logging.info("Posted reply to a donation")
 	return
-
-# Stops abuse.
-def check_user(user):
-	userlist = open("userlist.txt", "r")
-	count = 0
-
-	for line in userlist:
-		if user in line:
-			count += 1
-	userlist.close()
-
-	if count < 3:
-		return True
-	else:
-		return False
 
 def tips_remaining(balance):
 	count = 0
@@ -108,6 +86,15 @@ def tips_remaining(balance):
 			count += 1
 	return count
 
+#Do not tip replies to own comments
+def check_parent(parent_id, link_id):
+	if parent_id != link_id:
+		parent = r.get_info(thing_id=parent_id)
+		author = parent.author
+		if author.name == user:
+			return True
+	return False
+
 balance = check_balance()
 amount = calculate_tip(balance)
 tips = tips_remaining(balance)
@@ -118,16 +105,14 @@ comment_text = ("You seem sad, have some doge!\n\n"
 		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
 
 print ("\tTip set at %.1f doge" % amount)
-logging.info("\tTip set at %.1f doge" % amount)
 print ("\tEnough Doge for %.0f tips" % tips)
-logging.info("\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
 	comments = subreddit.get_comments(limit = 100)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
-		
+
 		counter += 1
 		author = comment.author
 		op_text = comment.body.lower()
@@ -140,11 +125,12 @@ while True:
 
 		if not has_praw_users and has_praw and balance >= amount and comment.id not in open('already_done.txt').read():
 			
-			if not check_user(author.name):
-				ratelimit(comment.reply, abuse_text)
-		
-				print("User %s did not pass check, posted comment!" % author.name)
-				logging.info("User %s did not pass check, posted comment!" % author.name)
+			if author.name in open('userlist.txt').read():
+				print("User %s have already received tip!" % author.name)
+
+			elif check_parent(comment.parent_id, comment.link_id):
+				print("User %s commented a comment from the bot!" % author.name) 
+
 			else:
 				ratelimit(comment.reply, comment_text)
 				balance -= amount
@@ -153,7 +139,6 @@ while True:
 					userlist.write("%s\n" % author.name)
 
 				print ("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
-				logging.info("Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 	
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
@@ -162,7 +147,6 @@ while True:
 	# If 200 or more comments parsed, check the balance to account for tips and calculate new tip
 	if (counter >= 200):
 		print "\tChecking balance and new tip amount..."
-		logging.info("\tChecking balance and new tip amount...")
 
 		counter = 0
 		balance = check_balance()
@@ -175,14 +159,11 @@ while True:
 		
 		if balance < amount:
 			print ("Exiting due to lack of funds")
-			logging.warning("Exiting due to lack of funds")
 			exit()
 		
 		tips = tips_remaining(balance)
 		print ("\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
-		logging.info("\Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
-	check_tips()
+	check_donations()
 	print ("\tSleeping for 100 seconds")
-	logging.info("\tSleeping for 100 seconds")
 	time.sleep(100)
