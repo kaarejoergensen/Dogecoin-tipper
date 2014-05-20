@@ -40,14 +40,12 @@ def calculate_tip(balance):
 
 # Check how many doge is left on the bots account
 def check_balance():
-	prawTerms = ['+tip sent']
 	messages = r.get_inbox('comments')
 	
 	for message in messages:
 		op_subject = message.subject
-		has_praw = any(string in op_subject for string in prawTerms)
 		
-		if has_praw:
+		if op_subject = '+tip sent':
 			op_text = message.body
 			op_line = op_text.splitlines()[2]
 			s=''.join(i for i in op_line if i.isdigit() or i == ".")
