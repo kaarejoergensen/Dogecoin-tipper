@@ -25,7 +25,10 @@ counter = 0
 #Log to file while printing to console
 def log(level, msg):
 	print msg
-	logging.info("\t%s" % msg)
+	if level == 'warning':
+		logging.warning("\t%s" % msg)
+	else:
+		logging.info("\t%s" % msg)
 
 # Ensures compliance with reddit api rules
 def api_call(func, *args, **kwargs):
