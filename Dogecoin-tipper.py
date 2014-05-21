@@ -132,7 +132,7 @@ log('info', "\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
-	comments = api_call(subreddit.get_comments, limit = 300)
+	comments = api_call(subreddit.get_comments, limit = 3000)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
 		counter += 1
@@ -143,13 +143,9 @@ while True:
 			has_praw_users = True
 		else:
 			has_praw_users = any(string in author.name for string in prawUsers)
-		has_praw = False
-		for line in op_text:
-			if (line[0] != '>' and any(string in line for string in prawWords):
-				has_praw = True
+		has_praw = any(string in op_text for string in prawWords)
 
 		if not has_praw_users and has_praw and balance >= amount and comment.id not in open('already_done.txt').read():
-			
 			if author.name in open('userlist.txt').read():
 				log('info', "\tUser %s have already received tip!" % author.name)
 
@@ -168,7 +164,6 @@ while True:
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
 			
-
 	# If 200 or more comments parsed, check the balance to account for tips and calculate new tip
 	if (counter >= 600):
 		counter = 0
