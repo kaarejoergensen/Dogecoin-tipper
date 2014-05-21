@@ -132,7 +132,7 @@ log('info', "\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
-	comments = api_call(subreddit.get_comments, limit = 3000)
+	comments = api_call(subreddit.get_comments, limit = 300)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
 		counter += 1
