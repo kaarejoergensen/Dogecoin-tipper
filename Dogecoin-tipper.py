@@ -15,7 +15,7 @@ user = 'DogeCoinTipperb'
 r.login(user, '')
 
 # Avoid comments from these users
-prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland']
+prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland', 'CreeperWithShades']
 prawWords =[":(", ":-(", ":'(", ":|"]
 
 subreddit = r.get_subreddit('dogecoin')
@@ -24,11 +24,11 @@ counter = 0
 
 #Log to file while printing to console
 def log(level, msg):
-	print msg
+	print("%s:  %s" % (time.ctime(), msg))
 	if level == 'warning':
-		logging.warning("%s:%s" % (time.ctime(), msg))
+		logging.warning("%s:  %s" % (time.ctime(), msg))
 	else:
-		logging.info("%s:%s" % (time.ctime(), msg))
+		logging.info("%s:  %s" % (time.ctime(), msg))
 
 # Ensures compliance with reddit api rules
 def api_call(func, *args, **kwargs):
@@ -92,7 +92,7 @@ def check_donations():
 				already_done.write("%s\n" % message.id)
 			api_call(message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
 			
-			log('info', "\tPosted reply to a donation")
+			log('info', "Posted reply to a donation")
 	return
 
 def tips_remaining(balance):
@@ -147,10 +147,10 @@ while True:
 
 		if not has_praw_users and has_praw and balance >= amount and comment.id not in open('already_done.txt').read():
 			if author.name in open('userlist.txt').read():
-				log('info', "\tUser %s have already received tip!" % author.name)
+				log('info', "User %s have already received tip!" % author.name)
 
 			elif check_parent(comment.parent_id, comment.link_id):
-				log('info', "\tUser %s commented a comment from the bot!" % author.name) 
+				log('info', "User %s commented a comment from the bot!" % author.name) 
 
 			else:
 				api_call(comment.reply, comment_text)
@@ -159,7 +159,7 @@ while True:
 				with open('userlist.txt', 'a') as userlist:
 					userlist.write("%s\n" % author.name)
 
-				log('info', "\tPosted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+				log('info', "Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 	
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
