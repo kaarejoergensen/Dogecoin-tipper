@@ -5,6 +5,7 @@ import logging
 from praw.errors import ExceptionList, APIException, InvalidCaptcha, InvalidUser, RateLimitExceeded, RedirectException
 from requests.exceptions import HTTPError, ConnectionError, Timeout
 from socket import timeout
+from random import randint
 
 # Basic configuration
 logging.basicConfig(filename='tipper.log', level=logging.INFO)
@@ -43,7 +44,8 @@ def calculate_tip(balance):
 # Check how many doge is left on the bots account
 def check_balance():
         try:
-		r.send_message('dogetipbot', 'history', '+history')
+		if randint(1,4) == 4:
+			r.send_message('dogetipbot', 'history', '+history')
                 messages = r.get_inbox(limit = 100)
 
                 for message in messages:
