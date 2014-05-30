@@ -43,13 +43,15 @@ def calculate_tip(balance):
 # Check how many doge is left on the bots account
 def check_balance():
         try:
-                messages = r.get_inbox(limit = 200)
+		r.send_message('dogetipbot', 'history', '+history')
+                messages = r.get_inbox(limit = 100)
+
                 for message in messages:
                         op_subject = message.subject
                         
-                        if op_subject == '+tip sent' or op_subject == '+tip received':
+                        if op_subject == 're: history':
                                 op_text = message.body
-                                op_line = op_text.splitlines()[2]
+                                op_line = op_text.splitlines()[3]
                                 s=''.join(i for i in op_line if i.isdigit() or i == ".")
                                 
                                 return float(s)
