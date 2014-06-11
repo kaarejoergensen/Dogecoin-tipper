@@ -36,34 +36,36 @@ def log(level, msg):
 def calculate_tip(balance):
 	if balance <= 2000:
 		return float(10)
-	elif balance > 2000 and balance <= 10000:
+	elif balance > 2000 and balance <= 15000:
 		return balance/200
-	elif balance > 10000:
-		return float(50)
+	elif balance > 15000:
+		return float(75)
 
 # Check how many doge is left on the bots account
 def check_balance():
-        try:
-		if randint(1,4) == 4:
-			r.send_message('dogetipbot', 'history', '+history')
-                messages = r.get_inbox(limit = 100)
+	result = None
+	while result is None:
+	        try:
+			if randint(1,4) == 4:
+				r.send_message('dogetipbot', 'history', '+history')
+	                messages = r.get_inbox(limit = 100)
 
-                for message in messages:
-                        op_subject = message.subject
+        	        for message in messages:
+                	        op_subject = message.subject
                         
-                        if op_subject == 're: history':
-                                op_text = message.body
-                                op_line = op_text.splitlines()[3]
-                                s=''.join(i for i in op_line if i.isdigit() or i == ".")
+	                        if op_subject == 're: history':
+        	                        op_text = message.body
+                	                op_line = op_text.splitlines()[3]
+                        	        result=''.join(i for i in op_line if i.isdigit() or i == ".")
                                 
-                                return float(s)
-        except (HTTPError, ConnectionError, RedirectException, Timeout, RateLimitExceeded, timeout) as error:
-		log('warning', "Check_balance()::Reddit is down (%s): Sleeping" % error)
-		time.sleep(30)
-		pass
-	except Exception as error:
-		log('warning', "Check_balance()::Error: %s" % error)
-		raise
+	                                return float(result)
+	        except (HTTPError, ConnectionError, RedirectException, Timeout, RateLimitExceeded, timeout) as error:
+			log('warning', "Check_balance()::Reddit is down (%s): Sleeping" % error)
+			time.sleep(30)
+			pass
+		except Exception as error:
+			log('warning', "Check_balance()::Error: %s" % error)
+			raise
 
 # Check for donations, and thanks if any is present
 def check_donations():
@@ -102,11 +104,11 @@ def tips_remaining(balance):
 		if balance <= 2000:
 			balance -= 10
 			count += 1
-		elif balance > 2000 and balance <= 10000:
+		elif balance > 2000 and balance <= 15000:
 			balance -= balance/200
 			count += 1
-		elif balance > 10000:
-			balance -= 50
+		elif balance > 15000:
+			balance -= 75
 			count += 1
 	return count
 
