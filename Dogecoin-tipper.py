@@ -15,9 +15,8 @@ r = praw.Reddit(user_agent=user_agent)
 user = 'DogeCoinTipperb'	
 r.login(user, '')
 
-# Avoid comments from these users
-prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'Randomactofdogebot', 'TweetPoster', 'DogeHelpBot', 'DogeHelpBot', 'keywordtipbot', 'mohland', 'CreeperWithShades']
-prawWords =[":(", ":-(", ":'(", ":|"]
+# Search for smileys
+prawWords =[":(", ":-(", ":'("]
 
 subreddit = r.get_subreddit('dogecoin')
 
@@ -94,25 +93,43 @@ def check_donations():
                 
         for message in messages:
 		op_text = message.body
-		author = message.author
+		op_author = message.author
 
                 has_praw = any(string in op_text for string in prawTerms)
-                if has_praw and author.name != 'dogetipbot' and message.id not in open('already_done.txt').read():
+                if has_praw and op_author.name != 'dogetipbot' and message.id not in open('already_done.txt').read():
 	                with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % message.id)
-                	api('check_donations', message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
+                	api('check_donations()', message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
 			counter += 1
                                 
                        	log('info', "Posted reply to a donation")
 	return counter
 
+# Check for unsubscribe messages
+def check_unsubscribe():
+	messages = api('check_unsubscribe()', r.get_inbox)
+
+	for message in messages:
+		op_text = message.body
+		op_subject = message.subject
+		op_author = message.author
+
+		if op_text == '+unsubscribe' and op_subject == 'unsubscribe' and message.id not in open('already_done.txt').read():
+			with open('already_done.txt', 'a') as already_done:
+					already_done.write("%s\n" % message.id)
+			with open('unsubscribe.txt', 'a') as unsubscribe:
+					unsubscribe.write("%s\n" % op_author.name)
+			api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and will not get tipped again.')
+		
+			log('info', "Unsubscribed user %s" % op_author.name)
+	return
 
 #Do not tip replies to own comments
 def check_parent(parent_id, link_id):
 	if parent_id != link_id:
         	parent = api('check_parent', r.get_info, thing_id=parent_id)
-                author = parent.author
-                if author.name == user:
+                op_author = parent.author
+                if op_author.name == user:
 	                return True
 	return False
 
@@ -123,7 +140,9 @@ tips = tips_remaining(balance)
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
 		"The amount i tip is entirely based on donations!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes." 
+		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
+		" ^^[Unsubscribe](%s)\n" % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
 log('info', "\tTip set at %.1f doge" % amount)
 log('info', "\tEnough Doge for %.0f tips" % tips)
@@ -133,28 +152,24 @@ while True:
 	comments = api('Main', subreddit.get_comments, limit = 300)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
-		author = comment.author
+		op_author = comment.author
 		op_text = comment.body.lower()
 
-		if author is None:
-			has_praw_users = True
-		else:
-			has_praw_users = any(string in author.name for string in prawUsers)
 		has_praw = any(string in op_text for string in prawWords)
 
-		if not has_praw_users and has_praw and balance >= amount and comment.id not in open('already_done.txt').read():
-			if author.name in open('userlist.txt').read():
-				log('info', "User %s have already received tip!" % author.name)
+		if has_praw and balance >= amount and comment.id not in open('already_done.txt').read() and op_text != ':(':
+			if op_author.name in open('userlist.txt').read() or op_author.name in open('unsubscribe.txt').read():
+				log('info', "Username %s exists in userlist.txt or unsubscribe.txt!" % op_author.name)
 
 			elif check_parent(comment.parent_id, comment.link_id):
-				log('info', "User %s commented a comment from the bot!" % author.name) 
+				log('info', "User %s commented a comment from the bot!" % op_author.name) 
 
 			else:
 				api('Main', comment.reply, comment_text)
 				balance -= amount
 				tips = tips_remaining(balance)
 				with open('userlist.txt', 'a') as userlist:
-					userlist.write("%s\n" % author.name)
+					userlist.write("%s\n" % op_author.name)
 
 				log('info', "Posted comment. Balance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
@@ -169,17 +184,22 @@ while True:
 		comment_text = ("You seem sad, have some doge!\n\n"
 				"+/u/dogetipbot %.1f doge\n\n"
 				"The amount i tip is entirely based on donations!\n\n"
-				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Please ^^consider ^^donating ^^to ^^keep ^^me ^^running! ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)\n" % amount)
-		
+				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes." 
+				" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
+				" ^^[Unsubscribe](%s)\n" % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
+
 		if balance < amount:
 			log('info', "Exiting due to lack of funds")
 			exit()
 		
 		tips = tips_remaining(balance)
 		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+
 	# If 500 or more users in userlist.txt delete file
 	if sum(1 for line in open('userlist.txt')) > 500:
 		open('userlist.txt', 'w').close()
+
 		log('info', "Userlist.txt reset")
 
+	check_unsubscribe()
 	time.sleep(300)
