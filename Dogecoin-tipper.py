@@ -85,17 +85,20 @@ def check_balance():
                                 
 		        return float(result)
 
-# Check for donations, and thanks if any is present
-def check_donations():
+# Check for donations and unsubscribe requests
+def check_messages():
 	counter = 0
 	prawTerms = ['+/u/dogetipbot']
         messages = api('check_donations()', r.get_inbox)
                 
         for message in messages:
 		op_text = message.body
+		op_subject = message.subject
 		op_author = message.author
 
                 has_praw = any(string in op_text for string in prawTerms)
+
+		# If the message is a donation
                 if has_praw and op_author.name != 'dogetipbot' and message.id not in open('already_done.txt').read():
 	                with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % message.id)
@@ -103,26 +106,18 @@ def check_donations():
 			counter += 1
                                 
                        	log('info', "Posted reply to a donation")
-	return counter
 
-# Check for unsubscribe messages
-def check_unsubscribe():
-	messages = api('check_unsubscribe()', r.get_inbox)
-
-	for message in messages:
-		op_text = message.body
-		op_subject = message.subject
-		op_author = message.author
-
+		# If the message is an unsubscribe request
 		if op_text == '+unsubscribe' and op_subject == 'unsubscribe' and message.id not in open('already_done.txt').read():
 			with open('already_done.txt', 'a') as already_done:
 					already_done.write("%s\n" % message.id)
 			with open('unsubscribe.txt', 'a') as unsubscribe:
 					unsubscribe.write("%s\n" % op_author.name)
-			api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and will not get tipped again.')
+			api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and will not receive a tip again.')
 		
 			log('info', "Unsubscribed user %s" % op_author.name)
-	return
+
+	return counter
 
 #Do not tip replies to own comments
 def check_parent(parent_id, link_id):
@@ -140,9 +135,9 @@ tips = tips_remaining(balance)
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
 		"The amount i tip is entirely based on donations!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes." 
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. Click [here](%s) to be blacklisted." 
 		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
-		" ^^[Unsubscribe](%s)\n" % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
+		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
 log('info', "\tTip set at %.1f doge" % amount)
 log('info', "\tEnough Doge for %.0f tips" % tips)
@@ -177,16 +172,16 @@ while True:
 				already_done.write("%s\n" % comment.id)
 			
 	# If donation received, check the balance to account for it and calculate new tip
-	if (check_donations() != 0):
+	if (check_messages() != 0):
 		balance = check_balance()
 
 		amount = calculate_tip(balance)
 		comment_text = ("You seem sad, have some doge!\n\n"
 				"+/u/dogetipbot %.1f doge\n\n"
 				"The amount i tip is entirely based on donations!\n\n"
-				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes." 
+				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. Click [here](%s) to be blacklisted." 
 				" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
-				" ^^[Unsubscribe](%s)\n" % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
+		 		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
 		if balance < amount:
 			log('info', "Exiting due to lack of funds")
@@ -201,5 +196,4 @@ while True:
 
 		log('info', "Userlist.txt reset")
 
-	check_unsubscribe()
 	time.sleep(300)
