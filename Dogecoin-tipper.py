@@ -5,7 +5,6 @@ import logging
 from praw.errors import ExceptionList, APIException, InvalidCaptcha, InvalidUser, RateLimitExceeded, RedirectException
 from requests.exceptions import HTTPError, ConnectionError, Timeout
 from socket import timeout
-from random import randint
 
 # Basic configuration
 logging.basicConfig(filename='tipper.log', level=logging.INFO)
@@ -21,8 +20,6 @@ prawUsers =[user, 'dogetipbot', 'dogetipchecker', 'changetip', 'Dogeseedbot', 'R
 prawWords =[":(", ":-(", ":'(", ":|"]
 
 subreddit = r.get_subreddit('dogecoin')
-
-counter = 0
 
 # Log to file while printing to console
 def log(level, msg):
@@ -59,10 +56,24 @@ def calculate_tip(balance):
 	elif balance > 15000:
 		return float(75)
 
+# Calculate the amount of tips remaining
+def tips_remaining(balance):
+	count = 0
+	while balance > 10:
+		if balance <= 2000:
+			balance -= 10
+			count += 1
+		elif balance > 2000 and balance <= 15000:
+			balance -= balance/200
+			count += 1
+		elif balance > 15000:
+			balance -= 75
+			count += 1
+	return count
+
 # Check how many doge is left on the bots account
 def check_balance():
-	if randint(1,4) == 4:
-		api('check_balance()', r.send_message, 'dogetipbot', 'history', '+history')
+	api('check_balance()', r.send_message, 'dogetipbot', 'history', '+history')
         messages = api('check_balance()', r.get_inbox)
 	
 	for message in messages:
@@ -77,6 +88,7 @@ def check_balance():
 
 # Check for donations, and thanks if any is present
 def check_donations():
+	counter = 0
 	prawTerms = ['+/u/dogetipbot']
         messages = api('check_donations()', r.get_inbox)
                 
@@ -89,24 +101,11 @@ def check_donations():
 	                with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % message.id)
                 	api('check_donations', message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
+			counter += 1
                                 
                        	log('info', "Posted reply to a donation")
-	return
+	return counter
 
-
-def tips_remaining(balance):
-	count = 0
-	while balance > 10:
-		if balance <= 2000:
-			balance -= 10
-			count += 1
-		elif balance > 2000 and balance <= 15000:
-			balance -= balance/200
-			count += 1
-		elif balance > 15000:
-			balance -= 75
-			count += 1
-	return count
 
 #Do not tip replies to own comments
 def check_parent(parent_id, link_id):
@@ -134,7 +133,6 @@ while True:
 	comments = api('Main', subreddit.get_comments, limit = 300)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
-		counter += 1
 		author = comment.author
 		op_text = comment.body.lower()
 
@@ -163,9 +161,8 @@ while True:
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
 			
-	# If 200 or more comments parsed, check the balance to account for tips and calculate new tip
-	if (counter >= 600):
-		counter = 0
+	# If donation received or more comments parsed, check the balance to account for tips and calculate new tip
+	if (check_donations() != 0):
 		balance = check_balance()
 
 		amount = calculate_tip(balance)
@@ -181,5 +178,4 @@ while True:
 		tips = tips_remaining(balance)
 		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
 
-	check_donations()
 	time.sleep(300)
