@@ -135,7 +135,7 @@ tips = tips_remaining(balance)
 comment_text = ("You seem sad, have some doge!\n\n"
 		"+/u/dogetipbot %.1f doge\n\n"
 		"The amount i tip is entirely based on donations!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. Click [here](%s) to be blacklisted." 
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
 		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
 		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
@@ -179,7 +179,7 @@ while True:
 		comment_text = ("You seem sad, have some doge!\n\n"
 				"+/u/dogetipbot %.1f doge\n\n"
 				"The amount i tip is entirely based on donations!\n\n"
-				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. Click [here](%s) to be blacklisted." 
+				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
 				" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
 		 		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
