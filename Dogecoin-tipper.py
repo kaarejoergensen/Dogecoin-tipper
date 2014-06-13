@@ -40,7 +40,7 @@ def api(level, func, *args, **kwargs):
 			time.sleep(30)
 			pass
 		except RateLimitExceeded as error:
-	                log('warning', "%s::RateLimitExceeded, sleeping %d seocnds" % (level, error.sleep_time))
+	                log('warning', "%s::RateLimitExceeded, sleeping %d seconds" % (level, error.sleep_time))
 	                time.sleep(error.sleep_time)
 	                pass
 		except Exception as error:
@@ -161,7 +161,7 @@ while True:
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
 			
-	# If donation received or more comments parsed, check the balance to account for tips and calculate new tip
+	# If donation received, check the balance to account for it and calculate new tip
 	if (check_donations() != 0):
 		balance = check_balance()
 
