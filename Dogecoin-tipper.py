@@ -177,5 +177,9 @@ while True:
 		
 		tips = tips_remaining(balance)
 		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+	# If 500 or more users in userlist.txt delete file
+	if sum(1 for line in open('userlist.txt')) > 500:
+		open('userlist.txt', 'w').close()
+		log('info', "Userlist.txt reset")
 
 	time.sleep(300)
