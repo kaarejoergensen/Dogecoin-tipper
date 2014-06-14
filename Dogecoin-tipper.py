@@ -15,9 +15,8 @@ r = praw.Reddit(user_agent=user_agent)
 user = 'DogeCoinTipperb'	
 r.login(user, '')
 
-# Search for smileys
+# Search for smileys in subreddit dogecoin
 prawWords =[":(", ":-(", ":'("]
-
 subreddit = r.get_subreddit('dogecoin')
 
 # Log to file while printing to console
@@ -57,18 +56,27 @@ def calculate_tip(balance):
 
 # Calculate the amount of tips remaining
 def tips_remaining(balance):
-	count = 0
+	counter = 0
 	while balance > 10:
 		if balance <= 2000:
 			balance -= 10
-			count += 1
+			counter += 1
 		elif balance > 2000 and balance <= 15000:
 			balance -= balance/200
-			count += 1
+			counter += 1
 		elif balance > 15000:
 			balance -= 75
-			count += 1
-	return count
+			counter += 1
+	return counter
+
+# Update comment text with new amount
+def update_comment(amount): 
+	return ("You seem sad, have some doge!\n\n"
+		"+/u/dogetipbot %.1f doge\n\n"
+		"The amount i tip is entirely based on donations!\n\n"
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
+		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
+		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
 # Check how many doge is left on the bots account
 def check_balance():
@@ -89,7 +97,7 @@ def check_balance():
 def check_messages():
 	counter = 0
 	prawTerms = ['+/u/dogetipbot']
-        messages = api('check_donations()', r.get_inbox)
+        messages = api('check_messages()', r.get_inbox)
                 
         for message in messages:
 		op_text = message.body
@@ -102,7 +110,7 @@ def check_messages():
                 if has_praw and op_author.name != 'dogetipbot' and message.id not in open('already_done.txt').read():
 	                with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % message.id)
-                	api('check_donations()', message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount i tip! very generosity')
+                	api('check_donations()', message.reply, 'Thank you for tipping! This will help me cheer up other shibes, and will raise the amount I tip! very generosity')
 			counter += 1
                                 
                        	log('info', "Posted reply to a donation")
@@ -116,7 +124,6 @@ def check_messages():
 			api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and will not receive a tip again.')
 		
 			log('info', "Unsubscribed user %s" % op_author.name)
-
 	return counter
 
 #Do not tip replies to own comments
@@ -128,16 +135,12 @@ def check_parent(parent_id, link_id):
 	                return True
 	return False
 
+# Initial balance and tip calculations
 balance = check_balance()
 amount = calculate_tip(balance)
 tips = tips_remaining(balance)
 
-comment_text = ("You seem sad, have some doge!\n\n"
-		"+/u/dogetipbot %.1f doge\n\n"
-		"The amount i tip is entirely based on donations!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
-		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
-		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
+comment_text = update_comment(amount)
 
 log('info', "\tTip set at %.1f doge" % amount)
 log('info', "\tEnough Doge for %.0f tips" % tips)
@@ -153,12 +156,19 @@ while True:
 		has_praw = any(string in op_text for string in prawWords)
 
 		if has_praw and balance >= amount and comment.id not in open('already_done.txt').read() and op_text != ':(':
-			if op_author.name in open('userlist.txt').read() or op_author.name in open('unsubscribe.txt').read():
-				log('info', "Username %s exists in userlist.txt or unsubscribe.txt!" % op_author.name)
+			# Deny if user has already received tip
+			if op_author.name in open('userlist.txt').read():
+				log('info', "Username %s exists in userlist.txt!" % op_author.name)
 
+			# Deny if user is unsubscribed
+			elif op_author.name in open('unsubscribe.txt').read():
+				log('info', "Username %s exists in unsubscribe.txt!" % op_author.name)
+
+			# Deny if user commented a comment from the bot
 			elif check_parent(comment.parent_id, comment.link_id):
 				log('info', "User %s commented a comment from the bot!" % op_author.name) 
 
+			# Else tip the user
 			else:
 				api('Main', comment.reply, comment_text)
 				balance -= amount
@@ -170,30 +180,26 @@ while True:
 
 			with open('already_done.txt', 'a') as already_done:
 				already_done.write("%s\n" % comment.id)
-			
-	# If donation received, check the balance to account for it and calculate new tip
+		
+	# If donation received, check the balance to account for it
 	if (check_messages() != 0):
 		balance = check_balance()
-
-		amount = calculate_tip(balance)
-		comment_text = ("You seem sad, have some doge!\n\n"
-				"+/u/dogetipbot %.1f doge\n\n"
-				"The amount i tip is entirely based on donations!\n\n"
-				"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
-				" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
-		 		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
+		tips = tips_remaining(balance)
 
 		if balance < amount:
 			log('info', "Exiting due to lack of funds")
 			exit()
 		
-		tips = tips_remaining(balance)
-		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, calculate_tip(balance)))
 
 	# If 500 or more users in userlist.txt delete file
 	if sum(1 for line in open('userlist.txt')) > 500:
 		open('userlist.txt', 'w').close()
 
 		log('info', "Userlist.txt reset")
+
+	# Calculate new tip
+	amount = calculate_tip(balance)
+	comment_text = update_comment(amount)	
 
 	time.sleep(300)
