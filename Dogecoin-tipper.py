@@ -45,6 +45,16 @@ def api(level, func, *args, **kwargs):
 			log('warning', "%s::Error: %s" % (level, error))
 			raise
 
+# Update comment text with new amount
+def update_comment(amount): 
+	return ("You seem sad, have some doge!\n\n"
+		"+/u/dogetipbot %.1f doge\n\n"
+		"The amount i tip is entirely based on donations!\n\n"
+		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes." 
+		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)"
+		" ^^Make ^^me ^^ignore ^^your ^^future: ^^[Comments](%s), ^^[Threads](%s)."
+		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bcomments', 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bthreads'))
+
 # Calculate the tip
 def calculate_tip(balance):
 	if balance <= 2000:
@@ -68,15 +78,6 @@ def tips_remaining(balance):
 			balance -= 75
 			counter += 1
 	return counter
-
-# Update comment text with new amount
-def update_comment(amount): 
-	return ("You seem sad, have some doge!\n\n"
-		"+/u/dogetipbot %.1f doge\n\n"
-		"The amount i tip is entirely based on donations!\n\n"
-		"^^I'm ^^a ^^bot ^^built ^^for ^^sad ^^shibes. ^^Click ^^[here](%s) ^^to ^^be ^^blacklisted." 
-		" ^^[Creator](http://www.reddit.com/user/kaare8p/) ^^[GitHub](https://github.com/kaare8p/Dogecoin-tipper)" 
-		 % (amount, 'http://www.reddit.com/message/compose?to=DogeCoinTipperb&subject=unsubscribe&message=%2Bunsubscribe'))
 
 # Check how many doge is left on the bots account
 def check_balance():
@@ -116,23 +117,41 @@ def check_messages():
                        	log('info', "Posted reply to a donation")
 
 		# If the message is an unsubscribe request
-		if op_text == '+unsubscribe' and op_subject == 'unsubscribe' and message.id not in open('already_done.txt').read():
+		if op_subject == 'unsubscribe' and message.id not in open('already_done.txt').read():
+			if op_text == '+comments':
+				with open('unsubscribe_comments.txt', 'a') as unsubscribe:
+					unsubscribe.write("%s\n" % op_author.name)
+				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and comments made by you will be ignored.')
+
+				log('info', "Unsubscribed user %s from comments" % op_author.name)
+		
+			elif op_text == '+threads':
+				with open('unsubscribe_threads.txt', 'a') as unsubscribe:
+					unsubscribe.write("%s\n" % op_author.name)
+				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and all comments in threads made by you will be ignored.')
+
+				log('info', "Unsubscribed user %s from threads" % op_author.name)
+
 			with open('already_done.txt', 'a') as already_done:
 					already_done.write("%s\n" % message.id)
-			with open('unsubscribe.txt', 'a') as unsubscribe:
-					unsubscribe.write("%s\n" % op_author.name)
-			api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and will not receive a tip again.')
-		
-			log('info', "Unsubscribed user %s" % op_author.name)
 	return counter
 
 #Do not tip replies to own comments
 def check_parent(parent_id, link_id):
 	if parent_id != link_id:
-        	parent = api('check_parent', r.get_info, thing_id=parent_id)
+        	parent = api('check_parent()', r.get_info, thing_id=parent_id)
                 op_author = parent.author
                 if op_author.name == user:
 	                return True
+	return False
+
+# Do not tip if author of link is unsubscribed
+def check_op(link_id):
+	submission = api('check_op()', r.get_info, thing_id = link_id)
+	op_author = submission.author
+
+	if op_author in open('unsubscribe_threads.txt').read():
+		return True
 	return False
 
 # Initial balance and tip calculations
@@ -167,6 +186,10 @@ while True:
 			# Deny if user commented a comment from the bot
 			elif check_parent(comment.parent_id, comment.link_id):
 				log('info', "User %s commented a comment from the bot!" % op_author.name) 
+
+			# Deny if op is unsubscribed
+			elif check_op(comment.link_id):
+				log('info', "User %s commented on a thread whre op is unsubscribed!" % op_author.name)
 
 			# Else tip the user
 			else:
