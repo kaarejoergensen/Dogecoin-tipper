@@ -121,14 +121,14 @@ def check_messages():
 			if op_text == '+comments':
 				with open('unsubscribe_comments.txt', 'a') as unsubscribe:
 					unsubscribe.write("%s\n" % op_author.name)
-				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and comments made by you will be ignored.')
+				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, all comments made by you will be ignored.')
 
 				log('info', "Unsubscribed user %s from comments" % op_author.name)
 		
 			elif op_text == '+threads':
 				with open('unsubscribe_threads.txt', 'a') as unsubscribe:
 					unsubscribe.write("%s\n" % op_author.name)
-				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, and all comments in threads made by you will be ignored.')
+				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, all comments in threads made by you will be ignored.')
 
 				log('info', "Unsubscribed user %s from threads" % op_author.name)
 
@@ -148,7 +148,7 @@ def check_parent(parent_id, link_id):
 # Do not tip if author of link is unsubscribed
 def check_op(link_id):
 	submission = api('check_op()', r.get_info, thing_id = link_id)
-	op_author = submission.author
+	op_author = submission.author.name
 
 	if op_author in open('unsubscribe_threads.txt').read():
 		return True
@@ -166,7 +166,7 @@ log('info', "\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
-	comments = api('Main', subreddit.get_comments, limit = 300)
+	comments = api('Main', subreddit.get_comments, limit = 100)
 	# Check for sad comments, and tip 'amount' doge if found
 	for comment in comments:
 		op_author = comment.author
@@ -177,11 +177,11 @@ while True:
 		if has_praw and balance >= amount and comment.id not in open('already_done.txt').read() and op_text != ':(':
 			# Deny if user has already received tip
 			if op_author.name in open('userlist.txt').read():
-				log('info', "Username %s exists in userlist.txt!" % op_author.name)
+				log('info', "User %s already received tip!" % op_author.name)
 
 			# Deny if user is unsubscribed
-			elif op_author.name in open('unsubscribe.txt').read():
-				log('info', "Username %s exists in unsubscribe.txt!" % op_author.name)
+			elif op_author.name in open('unsubscribe_comments.txt').read():
+				log('info', "User %s is unsubscribed from comments!" % op_author.name)
 
 			# Deny if user commented a comment from the bot
 			elif check_parent(comment.parent_id, comment.link_id):
@@ -225,4 +225,4 @@ while True:
 	amount = calculate_tip(balance)
 	comment_text = update_comment(amount)	
 
-	time.sleep(300)
+	time.sleep(100)
