@@ -158,14 +158,12 @@ def check_op(link_id):
 # Update balance, sends message to dogetipbot if message is 1
 def update_balance(message):
 	balance = check_balance(message)
-	tips = tips_remaining(balance)
-	amount = calculate_tip(balance)
 
-	if balance < amount:
+	if balance < calculate_tip(balance):
 		log('warning', "Exiting due to lack of funds")
 		exit()
 		
-	log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+	log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips_remaining(balance), calculate_tip(balance)))
 
 	return balance
 
