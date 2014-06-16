@@ -80,8 +80,9 @@ def tips_remaining(balance):
 	return counter
 
 # Check how many doge is left on the bots account
-def check_balance():
-	api('check_balance()', r.send_message, 'dogetipbot', 'history', '+history')
+def check_balance(send_message):
+	if send_message:
+		api('check_balance()', r.send_message, 'dogetipbot', 'history', '+history')
         messages = api('check_balance()', r.get_inbox)
 	
 	for message in messages:
@@ -118,7 +119,7 @@ def check_messages():
 
 		# If the message is an unsubscribe request
 		if op_subject == 'unsubscribe' and message.id not in open('already_done.txt').read():
-			if op_text == '+comments':
+			if op_text == '+comments' or op_text == '+unsubscribe':
 				with open('unsubscribe_comments.txt', 'a') as unsubscribe:
 					unsubscribe.write("%s\n" % op_author.name)
 				api('check_unsubscribe()', message.reply, 'You have been unsubscribed from the bot, all comments made by you will be ignored.')
@@ -154,15 +155,26 @@ def check_op(link_id):
 		return True
 	return False
 
+# Update balance, sends message to dogetipbot if message is 1
+def update_balance(message):
+	balance = check_balance(message)
+	tips = tips_remaining(balance)
+	amount = calculate_tip(balance)
+
+	if balance < amount:
+		log('warning', "Exiting due to lack of funds")
+		exit()
+		
+	log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, amount))
+
+	return balance
+
 # Initial balance and tip calculations
-balance = check_balance()
+balance = update_balance(1)
+check_balance_time = time.time()
 amount = calculate_tip(balance)
-tips = tips_remaining(balance)
 
 comment_text = update_comment(amount)
-
-log('info', "\tTip set at %.1f doge" % amount)
-log('info', "\tEnough Doge for %.0f tips" % tips)
 
 # Main loop
 while True:
@@ -206,15 +218,14 @@ while True:
 		
 	# If donation received, check the balance to account for it
 	if (check_messages() != 0):
-		balance = check_balance()
-		tips = tips_remaining(balance)
-
-		if balance < amount:
-			log('info', "Exiting due to lack of funds")
-			exit()
+		balance = update_balance(1)
+		check_balance_time = time.time()
+	
+	# If it's more than 10 minutes since +history message sent, check balance again
+	if check_balance_time - time.time() > 600:
+		balance = update_balance(0)
+		check_balance_time = 0
 		
-		log('info', "\tBalance: %.1f Enough for %.0f tips, one tip is %.1f doge" % (balance, tips, calculate_tip(balance)))
-
 	# If 500 or more users in userlist.txt delete file
 	if sum(1 for line in open('userlist.txt')) > 500:
 		open('userlist.txt', 'w').close()
