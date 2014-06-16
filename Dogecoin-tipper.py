@@ -220,7 +220,7 @@ while True:
 		check_balance_time = time.time()
 	
 	# If it's more than 10 minutes since +history message sent, check balance again
-	if check_balance_time - time.time() > 600:
+	if time.time() - check_balance_time > 600:
 		balance = update_balance(0)
 		check_balance_time = 0
 		
